@@ -1,9 +1,10 @@
 const express = require('express');
+const cors = require("cors")
 const router = express.Router();
 const dxfData = require('../services/dxfData');
 
 /* GET quotes listing. */
-router.get('/', async function(req, res, next) {
+router.get('/', cors(), async function(req, res, next) {
   try {
     res.json(await dxfData.getDXF());
   } catch (err) {
