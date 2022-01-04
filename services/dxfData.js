@@ -6,19 +6,19 @@ async function getDXF() {
     const rows = await db.query(
         'select \n' + 
 	    	//'objectid, \n' + 
-	    	'objecttype_tbl.name AS type, json from public.building_tbl \n' +
-                'left join level_tbl on level_tbl.buildingid = building_tbl.buildingid\n' +
-                'left join layer_tbl on level_tbl.levelid = layer_tbl.levelid\n' +
-                'left join object_tbl on object_tbl.layerid = layer_tbl.layerid\n' +
-                'left join objecttype_tbl on object_tbl.objecttypeid = objecttype_tbl.objecttypeid\n' +
-	    	'WHERE object_tbl.objecttypeid IS NOT NULL \n' + 
-	    	'AND objecttype_tbl.name LIKE \'LINE\';'
+	    	'objecttypes.name AS type, json_data from public.buildings \n' +
+                'left join levels on levels.building_id = buildings.building_id\n' +
+                'left join layers on levels.level_id = layers.level_id\n' +
+                'left join objects on objects.layer_id = layers.layer_id\n' +
+                'left join objecttypes on objects.objecttype_id = objecttypes.objecttype_id\n' +
+	    	'WHERE objects.objecttype_id IS NOT NULL ;' 
+	    	//'AND objecttype_tbl.name NOT LIKE \'LINE\';'
     );
     const dbData = helper.emptyOrRows(rows);
     
     let dxfData = [];
     dbData.forEach(element => { 
-	dxfData.push(Object.assign({type: element.type},JSON.parse(element.json)));
+	dxfData.push(Object.assign({type: element.type},JSON.parse(element.json_data)));
     });
 
     return {
