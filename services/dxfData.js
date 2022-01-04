@@ -2,7 +2,8 @@ const db = require('./db');
 const helper = require('../helper');
 const config = require('../config');
 
-async function getDXF() {
+
+async function getEntitiesByLevelId(levelId){
     const entityRows = await db.query(
         'select \n' + 
 	//'objectid, \n' + 
@@ -21,6 +22,11 @@ async function getDXF() {
 	dxfData.push(Object.assign({type: element.type},JSON.parse(element.json_data)));
     });
 
+    return dxfData;
+}
+
+
+async function getBlocksByLevelId(levelId){
     const blockRows = await db.query(
         'select blocks.name as name, objecttypes.name as type, blockobjects.json_data from public.buildings \n' +
 	'left join levels on levels.building_id = buildings.building_id \n' +
@@ -32,12 +38,23 @@ async function getDXF() {
     );
      const dbBlockData = helper.emptyOrRows(blockRows);
 	
-    let dxfBlockData = [];
-    dbBlockData.forEach(element => { 
-	dxfBlockData.push(Object.assign({type: element.type},JSON.parse(element.json_data)));
+    let dxfBlockData = {};
+    dbBlockData.forEach(element => {
+	if(!dxfBlockData[element.name])
+	    dxfBlockData[element.name] = {entities:[]}  // Here can the block statement be feed with more informations if available
+
+	dxfBlockData[element.name].entities.push(Object.assign({type: element.type},JSON.parse(element.json_data)));
     });
+
+
+    return dxfBlockData;
+}
+
+async function getDXF(layerId = 0) {
 	
-	
+    let dxfEntities = await getEntitiesByLevelId(layerId);
+    let dxfBlocks = await getBlocksByLevelId(layerId);
+
     return {
 		'tables': {
 			"lineType": {
@@ -62,8 +79,8 @@ async function getDXF() {
 				}
 			},
 		},
-		'entities': dxfData,
-	    	'blocks': dxfBlockData
+		'entities': dxfEntities,
+	    	'blocks': dxfBlocks
 	}
 }
 
